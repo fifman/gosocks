@@ -12,7 +12,7 @@ type TcpServer struct {
 }
 
 func (server TcpServer) Run(ctx *LocalContext) {
-	listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", server.Port))
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", server.Port))
 	if err != nil {
 		fmt.Println("test run", server.Name, "listener error:", err)
 		return
