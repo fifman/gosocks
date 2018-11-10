@@ -1,4 +1,4 @@
-package slclient
+package main
 
 import (
 	"github.com/fifman/gosocks/src/surlane"
