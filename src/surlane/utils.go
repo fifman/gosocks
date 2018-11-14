@@ -10,6 +10,7 @@ import (
 	"strings"
 	"strconv"
 	"fmt"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -43,6 +44,10 @@ type contextLogger struct {
 	debug *log.Logger
 	trace *log.Logger
 	level int
+}
+
+func (logger *contextLogger) logError(err error, msg string) {
+	logger.Errorf(msg + " reason: %+v", errors.WithStack(err))
 }
 
 func (logger *contextLogger) Level(level int) {
@@ -134,19 +139,20 @@ func newContextLogger(name string, id int) *contextLogger {
 }
 
 type AppLogger interface {
-	Error(v ...interface{})
-	Panic(v ...interface{})
-	Info(v ...interface{})
-	Warn(v ...interface{})
-	Debug(v ...interface{})
-	Trace(v ...interface{})
-	Errorf(fmt string, v ...interface{})
-	Panicf(fmt string, v ...interface{})
-	Infof(fmt string, v ...interface{})
-	Warnf(fmt string, v ...interface{})
-	Debugf(fmt string, v ...interface{})
-	Tracef(fmt string, v ...interface{})
+	Error(...interface{})
+	Panic(...interface{})
+	Info(...interface{})
+	Warn(...interface{})
+	Debug(...interface{})
+	Trace(...interface{})
+	Errorf(string, ...interface{})
+	Panicf(string, ...interface{})
+	Infof(string, ...interface{})
+	Warnf(string, ...interface{})
+	Debugf(string, ...interface{})
+	Tracef(string, ...interface{})
 	Level(int)
+	logError(error, string)
 }
 
 type LocalContext struct {

@@ -15,8 +15,8 @@ func getServerConfig() surlane.ServerConfig {
 		surlane.Config{
 			"123456",
 			surlane.CES_128_CFB,
-			1180,
-			time.Second * 15,
+			1190,
+			time.Second * 150,
 		},
 	}
 }

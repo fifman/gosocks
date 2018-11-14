@@ -16,8 +16,8 @@ func getConfig() surlane.ClientConfig {
 			"123456",
 			surlane.CES_128_CFB,
 			1180,
-			time.Second * 15,
+			time.Second * 150,
 		},
-		"45.78.12.43:1180",
+		"45.78.12.43:1190",
 	}
 }

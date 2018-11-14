@@ -14,45 +14,44 @@ type Pipe struct {
 }
 
 func (pipe *Pipe) Run() {
-	signChannel := make(chan error, 2)
+	signChannel := make(chan interface{}, 2)
 	go transfer(NewContext(pipe.LocalContext, "down channel"), signChannel, pipe.upConn, pipe.downConn)
 	go transfer(NewContext(pipe.LocalContext, "up channel"), signChannel, pipe.downConn, pipe.upConn)
 	for i:=0; i<2; i++ {
 		select {
 		case <-pipe.Done():
 			return
-		case err := <- signChannel:
-			if err != nil && err != io.EOF {
-				pipe.Errorf("%+v\n\n", errors.Wrap(err, "pipe error"))
-				pipe.Cancel()
-				return
-			}
+		case <- signChannel:
 		}
 	}
 }
 
-func transfer(ctx *LocalContext, signChannel chan error, src, dst net.Conn) {
-	var err error
-	for ; err == nil; {
-		err = once(ctx, src, dst)
-	}
-	signChannel <- err
+func transfer(ctx *LocalContext, signChannel chan interface{}, src, dst net.Conn) {
+	for once(ctx, src, dst) {}
+	signChannel <- nil
 }
 
-func once(ctx *LocalContext, src, dst net.Conn) error {
-	name := ctx.Name
+func once(ctx *LocalContext, src, dst net.Conn) bool {
 	buffer := BufferPool.Borrow()
 	defer BufferPool.GetBack(buffer)
 	n, err := src.Read(buffer)
+	ctx.Level(LevelDebug)
+	ctx.Debug("transfer bytes:", n, err)
+	ctx.Level(LevelError)
 	if n > 0 {
-		if _, err2 := dst.Write(buffer[:n]); err2 != nil {
-			return errors.Wrap(err2, "write once {" + name + "} error")
+		if _, err := dst.Write(buffer[:n]); err != nil {
+			ctx.logError(err, "once write wrong!")
+			return false
 		}
 	}
-	if err != nil && err != io.EOF {
-		return errors.Wrap(err, "once {" + name + "} read error")
+	if err != nil {
+		if err != io.EOF {
+			ctx.logError(err, "once read wrong!")
+			ctx.Cancel()
+		}
+		return false
 	}
-	return nil
+	return true
 }
 
 func CreateClientPipe (ctx *LocalContext, config ClientConfig, conn net.Conn) error {

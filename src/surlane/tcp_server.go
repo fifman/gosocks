@@ -40,8 +40,10 @@ func RunClient(ctx *LocalContext, config ClientConfig) {
 		"surlane-client",
 		config.Port,
 		func(conn net.Conn) {
-			ctx := NewContext(ctx, "client conn handler")
-			if err := CreateClientPipe(ctx, config, conn); err != nil {
+			ctx.Level(LevelDebug)
+			ctx.Debug("new handled local conn:", conn.RemoteAddr())
+			ctx.Level(LevelError)
+			if err := CreateClientPipe(NewContext(ctx, "client conn handler"), config, conn); err != nil {
 				ctx.Errorf("handle client error: %+v\n\n", err)
 			}
 		},
@@ -53,8 +55,10 @@ func RunServer(ctx *LocalContext, config ServerConfig, dialServer func(*LocalCon
 		"surlane-server",
 		config.Port,
 		func(conn net.Conn) {
-			ctx := NewContext(ctx, "server conn handler")
-			if err := CreateServerPipe(ctx, config, conn, dialServer); err != nil {
+			ctx.Level(LevelDebug)
+			ctx.Debug("new handled client conn:", conn.RemoteAddr())
+			ctx.Level(LevelError)
+			if err := CreateServerPipe(NewContext(ctx, "server conn handler"), config, conn, dialServer); err != nil {
 				ctx.Errorf("handle server error: %+v\n\n", err)
 			}
 		},
