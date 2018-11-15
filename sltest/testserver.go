@@ -17,7 +17,7 @@ func main() {
 			fmt.Println("new handled client conn:", conn.RemoteAddr())
 			buffer := make([]byte, 10)
 			var err error
-			for err == nil {
+			for ;err == nil; {
 				_, err = conn.Read(buffer)
 			}
 			fmt.Println("read err:", err)
