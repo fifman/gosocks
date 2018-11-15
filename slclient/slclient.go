@@ -12,12 +12,12 @@ func main() {
 
 func getConfig() surlane.ClientConfig {
 	return surlane.ClientConfig{
-		surlane.Config{
+		Config: surlane.Config{
 			"123456",
 			surlane.CES_128_CFB,
 			1180,
 			time.Second * 150,
 		},
-		"45.78.12.43:1190",
+		Server: "45.78.12.43:1190",
 	}
 }

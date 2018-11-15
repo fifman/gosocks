@@ -35,9 +35,7 @@ func once(ctx *LocalContext, src, dst net.Conn) bool {
 	buffer := BufferPool.Borrow()
 	defer BufferPool.GetBack(buffer)
 	n, err := src.Read(buffer)
-	ctx.Level(LevelDebug)
 	ctx.Debug("transfer bytes:", n, err)
-	ctx.Level(LevelError)
 	if n > 0 {
 		if _, err := dst.Write(buffer[:n]); err != nil {
 			ctx.logError(err, "once write wrong!")

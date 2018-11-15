@@ -12,11 +12,11 @@ func main() {
 
 func getServerConfig() surlane.ServerConfig {
 	return surlane.ServerConfig{
-		surlane.Config{
-			"123456",
-			surlane.CES_128_CFB,
-			1190,
-			time.Second * 150,
+		Config: surlane.Config{
+			Password: "123456",
+			Method:   surlane.CES_128_CFB,
+			Port:     1190,
+			Timeout:  time.Second * 150,
 		},
 	}
 }
