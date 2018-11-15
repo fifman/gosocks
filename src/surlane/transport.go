@@ -38,13 +38,13 @@ func once(ctx *LocalContext, src, dst net.Conn) bool {
 	ctx.Debug("transfer bytes:", n, err)
 	if n > 0 {
 		if _, err := dst.Write(buffer[:n]); err != nil {
-			ctx.logError(err, "once write wrong!")
+			ctx.LogError(err, "once write wrong!")
 			return false
 		}
 	}
 	if err != nil {
 		if err != io.EOF {
-			ctx.logError(err, "once read wrong!")
+			ctx.LogError(err, "once read wrong!")
 			ctx.Cancel()
 		}
 		return false

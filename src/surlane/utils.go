@@ -46,7 +46,7 @@ type contextLogger struct {
 	level int
 }
 
-func (logger *contextLogger) logError(err error, msg string) {
+func (logger *contextLogger) LogError(err error, msg string) {
 	logger.Errorf(msg + " reason: %+v", errors.WithStack(err))
 }
 
@@ -152,7 +152,7 @@ type AppLogger interface {
 	Debugf(string, ...interface{})
 	Tracef(string, ...interface{})
 	Level(int)
-	logError(error, string)
+	LogError(error, string)
 }
 
 type LocalContext struct {
