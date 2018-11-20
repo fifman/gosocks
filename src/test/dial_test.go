@@ -10,7 +10,8 @@ import (
 
 var (
 	address = "45.78.12.43:1190"
-	testAddress = "45.78.12.43:1191"
+	//testAddress = "45.78.12.43:1191"
+	testAddress = "127.0.0.1:1191"
 	background = context.Background()
 )
 
@@ -57,13 +58,21 @@ func dialDemo(ctx *surlane.LocalContext) bool {
 	}
 	defer conn.Close()
 	_, err = conn.Write([]byte{1,2,3,4})
+	/*
 	if err != nil {
+		ctx.LogError(err, "write error!")
 		return true
 	}
 	buffer := make([]byte, 10)
-	for err == nil {
-		_, err = conn.Read(buffer)
+	n, err := conn.Read(buffer)
+	if n > 0 {
+		fmt.Println("bytes:", buffer[:n])
 	}
+	if err != nil && err != io.EOF {
+		ctx.LogError(err, "read error!")
+		return true
+	}
+	*/
 	return false
 }
 
