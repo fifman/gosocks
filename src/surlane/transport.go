@@ -64,11 +64,11 @@ func CreateClientPipe (ctx *LocalContext, config ClientConfig, conn net.Conn) {
 		return
 	}
 	upRawConn, err := (&net.Dialer{}).DialContext(NewContextWithDeadline(ctx, "client dial", config.Timeout), "tcp", config.Server)
-	config.ApplyTimeout(upRawConn)
 	if err != nil {
 		ctx.LogError(err, "client pipe 2")
 		return
 	}
+	config.ApplyTimeout(upRawConn)
 	defer upRawConn.Close()
 	iv := GetIV(config)
 	config.ApplyTimeout(conn)
@@ -94,13 +94,12 @@ func CreateServerPipe(ctx *LocalContext, config ServerConfig, conn net.Conn, dia
 		return
 	}
 	downConn, err := NewServerSecureConn(conn, config, iv)
-	config.ApplyTimeout(conn)
-	config.ApplyTimeout(downConn)
 	if err != nil {
 		ctx.LogError(err, "server pipe 2")
 		return
 	}
 	defer downConn.Close()
+	config.ApplyTimeout(downConn)
 	upConn, err := dialServer(NewContextWithDeadline(ctx, "server dial", config.Timeout), address)
 	if err != nil {
 		ctx.LogError(err, "server pipe 3")
