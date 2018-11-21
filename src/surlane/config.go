@@ -1,12 +1,19 @@
 package surlane
 
-import "time"
+import (
+	"time"
+	"net"
+)
 
 type Config struct {
 	Password string
 	Method   int16
 	Port     uint16
 	Timeout  time.Duration
+}
+
+func (config *Config ) ApplyTimeout(conn net.Conn) {
+	conn.SetReadDeadline(time.Now().Add(config.Timeout))
 }
 
 type ServerConfig struct {

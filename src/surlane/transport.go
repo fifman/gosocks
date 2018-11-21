@@ -3,20 +3,19 @@ package surlane
 import (
 	"net"
 	"io"
-	"time"
-	"github.com/pkg/errors"
 )
 
 type Pipe struct {
 	downConn net.Conn
 	upConn net.Conn
+	config Config
 	*LocalContext
 }
 
 func (pipe *Pipe) Run() {
 	signChannel := make(chan interface{}, 2)
-	go transfer(NewContext(pipe.LocalContext, "down channel"), signChannel, pipe.upConn, pipe.downConn)
-	go transfer(NewContext(pipe.LocalContext, "up channel"), signChannel, pipe.downConn, pipe.upConn)
+	go transfer(NewContext(pipe.LocalContext, "down channel"), signChannel, pipe.upConn, pipe.downConn, pipe.config)
+	go transfer(NewContext(pipe.LocalContext, "up channel"), signChannel, pipe.downConn, pipe.upConn, pipe.config)
 	for i:=0; i<2; i++ {
 		select {
 		case <-pipe.Done():
@@ -26,12 +25,13 @@ func (pipe *Pipe) Run() {
 	}
 }
 
-func transfer(ctx *LocalContext, signChannel chan interface{}, src, dst net.Conn) {
-	for once(ctx, src, dst) {}
+func transfer(ctx *LocalContext, signChannel chan interface{}, src, dst net.Conn, config Config) {
+	for once(ctx, config, src, dst) {}
 	signChannel <- nil
 }
 
-func once(ctx *LocalContext, src, dst net.Conn) bool {
+func once(ctx *LocalContext, config Config, src, dst net.Conn) bool {
+	config.ApplyTimeout(src)
 	buffer := BufferPool.Borrow()
 	defer BufferPool.GetBack(buffer)
 	n, err := src.Read(buffer)
@@ -41,61 +41,73 @@ func once(ctx *LocalContext, src, dst net.Conn) bool {
 			ctx.LogError(err, "once write wrong!")
 			return false
 		}
-	}
-	if err != nil {
-		if err != io.EOF {
-			ctx.LogError(err, "once read wrong!")
-			ctx.Cancel()
-		}
+	} else {
+		ctx.Error("once read zero")
 		return false
 	}
-	return true
+	if err == nil {
+		return true
+	}
+	if !CheckConnReset(err) && err != io.EOF {
+		ctx.LogError(err, "once read wrong!")
+		ctx.Cancel()
+	}
+	return false
 }
 
-func CreateClientPipe (ctx *LocalContext, config ClientConfig, conn net.Conn) error {
+func CreateClientPipe (ctx *LocalContext, config ClientConfig, conn net.Conn) {
 	defer conn.Close()
-	conn.SetDeadline(time.Now().Add(config.Timeout))
+	config.ApplyTimeout(conn)
 	rawAddr, err := Socks5Auth(ctx, conn);
 	if err != nil {
-		return errors.Wrap(err, "client pipe 1")
+		ctx.LogError(err, "client pipe 1")
+		return
 	}
-	upRawConn, err := (&net.Dialer{}).DialContext(ctx, "tcp", config.Server)
+	upRawConn, err := (&net.Dialer{}).DialContext(NewContextWithDeadline(ctx, "client dial", config.Timeout), "tcp", config.Server)
+	config.ApplyTimeout(upRawConn)
 	if err != nil {
-		return errors.Wrap(err, "client pipe 2")
+		ctx.LogError(err, "client pipe 2")
+		return
 	}
 	defer upRawConn.Close()
 	iv := GetIV(config)
+	config.ApplyTimeout(conn)
 	if err = LaneAck(ctx, upRawConn, rawAddr, iv); err != nil {
-		return errors.Wrap(err, "client pipe 3")
+		ctx.LogError(err, "client pipe 3")
+		return
 	}
 	upConn, err := NewClientSecureConn(upRawConn, config, iv)
 	if err != nil {
-		return errors.Wrap(err, "client pipe 4")
+		ctx.LogError(err, "client pipe 4")
+		return
 	}
-	pipe := Pipe{ conn, upConn, ctx}
+	pipe := Pipe{ conn, upConn, config.Config, ctx}
 	pipe.Run()
-	return nil
 }
 
-func CreateServerPipe(ctx *LocalContext, config ServerConfig, conn net.Conn, dialServer func(*LocalContext, string)(net.Conn, error)) error {
+func CreateServerPipe(ctx *LocalContext, config ServerConfig, conn net.Conn, dialServer func(*LocalContext, string)(net.Conn, error)) {
 	defer conn.Close()
-	conn.SetDeadline(time.Now().Add(config.Timeout))
+	config.ApplyTimeout(conn)
 	iv, address, err := LaneAuth(ctx, config, conn)
 	if  err != nil {
-		return errors.Wrap(err, "server pipe 1")
+		ctx.LogError(err, "server pipe 1")
+		return
 	}
 	downConn, err := NewServerSecureConn(conn, config, iv)
+	config.ApplyTimeout(conn)
+	config.ApplyTimeout(downConn)
 	if err != nil {
-		return errors.Wrap(err, "server pipe 2")
+		ctx.LogError(err, "server pipe 2")
+		return
 	}
 	defer downConn.Close()
-	upConn, err := dialServer(ctx, address)
+	upConn, err := dialServer(NewContextWithDeadline(ctx, "server dial", config.Timeout), address)
 	if err != nil {
-		return errors.Wrap(err, "server pipe 3")
+		ctx.LogError(err, "server pipe 3")
+		return
 	}
-	pipe := Pipe{ downConn, upConn, ctx}
+	pipe := Pipe{ downConn, upConn, config.Config, ctx}
 	pipe.Run()
-	return nil
 }
 
 func DialWeb(ctx *LocalContext, address string)(net.Conn, error) {

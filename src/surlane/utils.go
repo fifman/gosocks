@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"fmt"
 	"github.com/pkg/errors"
+	"syscall"
 )
 
 const (
@@ -231,4 +232,15 @@ func GenRawAddr(address string, port uint16) []byte {
 	copy(result[1:addrLen+1], addrBytes)
 	binary.BigEndian.PutUint16(result[addrLen+1:addrLen+3], port)
 	return result
+}
+
+func CheckConnReset(err error) bool {
+	opErr, ok := err.(*net.OpError)
+	if !ok {
+		return false
+	}
+	if opErr.Err == nil {
+		return false
+	}
+	return opErr.Err.Error() == syscall.ECONNRESET.Error()
 }
