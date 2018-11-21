@@ -42,13 +42,13 @@ func once(ctx *LocalContext, config Config, src, dst net.Conn) bool {
 			return false
 		}
 	} else {
-		ctx.Error("once read zero")
+		ctx.LogError(err, "once read zero")
 		return false
 	}
 	if err == nil {
 		return true
 	}
-	if !CheckConnReset(err) && err != io.EOF {
+	if err != io.EOF {
 		ctx.LogError(err, "once read wrong!")
 		ctx.Cancel()
 	}
