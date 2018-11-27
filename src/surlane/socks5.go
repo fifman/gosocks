@@ -22,7 +22,6 @@ const (
 func Socks5Auth(ctx *LocalContext, conn net.Conn) ([]byte, error) {
 	buffer := BufferPool.Borrow()
 	defer BufferPool.GetBack(buffer)
-	//buffer := make([]byte, 4000)
 	ctx.Trace("server mth vali")
 	if err := methodValidation(ctx, conn, buffer); err != nil {
 		ctx.Trace("vali end")

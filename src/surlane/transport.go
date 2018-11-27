@@ -3,6 +3,7 @@ package surlane
 import (
 	"net"
 	"io"
+	"github.com/pkg/errors"
 )
 
 type Pipe struct {
@@ -12,10 +13,14 @@ type Pipe struct {
 	*LocalContext
 }
 
+var (
+	pipNum = 0
+)
+
 func (pipe *Pipe) Run() {
 	signChannel := make(chan interface{}, 2)
-	go transfer(NewContext(pipe.LocalContext, "down channel"), signChannel, pipe.upConn, pipe.downConn, pipe.config)
-	go transfer(NewContext(pipe.LocalContext, "up channel"), signChannel, pipe.downConn, pipe.upConn, pipe.config)
+	go transfer(pipe.LocalContext, signChannel, pipe.upConn, pipe.downConn, pipe.config)
+	go transfer(pipe.LocalContext, signChannel, pipe.downConn, pipe.upConn, pipe.config)
 	for i:=0; i<2; i++ {
 		select {
 		case <-pipe.Done():
@@ -39,10 +44,12 @@ func once(ctx *LocalContext, config Config, src, dst net.Conn) bool {
 	if n > 0 {
 		if _, err := dst.Write(buffer[:n]); err != nil {
 			ctx.LogError(err, "once write wrong!")
+			ctx.Cancel()
 			return false
 		}
 	} else {
 		ctx.LogError(err, "once read zero")
+		ctx.Cancel()
 		return false
 	}
 	if err == nil {
@@ -56,14 +63,18 @@ func once(ctx *LocalContext, config Config, src, dst net.Conn) bool {
 }
 
 func CreateClientPipe (ctx *LocalContext, config ClientConfig, conn net.Conn) {
+	pipNum++
+	ctx.Level(LevelInfo)
+	ctx.Info("new client pipe!", pipNum)
+	ctx.Level(LevelError)
 	defer conn.Close()
 	config.ApplyTimeout(conn)
-	rawAddr, err := Socks5Auth(ctx, conn);
+	rawAddr, err := Socks5Auth(ctx, conn)
 	if err != nil {
 		ctx.LogError(err, "client pipe 1")
 		return
 	}
-	upRawConn, err := (&net.Dialer{}).DialContext(NewContextWithDeadline(ctx, "client dial", config.Timeout), "tcp", config.Server)
+	upRawConn, err := (&net.Dialer{}).DialContext(NewContext(ctx, "client dial"), "tcp", config.Server)
 	if err != nil {
 		ctx.LogError(err, "client pipe 2")
 		return
@@ -134,26 +145,24 @@ func (secureConn *SecureConn) Write(buffer []byte) (n int, err error) {
 	return
 }
 
-func NewClientSecureConn(conn net.Conn, config ClientConfig, iv []byte) (secureConn *SecureConn, err error) {
+func NewClientSecureConn(conn net.Conn, config ClientConfig, iv []byte) (*SecureConn, error) {
 	cipher, err := NewSurCipher4Client(config, iv)
 	if err != nil {
-		return
+		return nil, errors.WithStack(err)
 	}
-	secureConn = &SecureConn{
+	return &SecureConn{
 		cipher,
 		conn,
-	}
-	return
+	}, nil
 }
 
-func NewServerSecureConn(conn net.Conn, config ServerConfig, iv []byte) (secureConn *SecureConn, err error) {
+func NewServerSecureConn(conn net.Conn, config ServerConfig, iv []byte) (*SecureConn, error) {
 	cipher, err := NewSurCipher4Server(config, iv)
 	if err != nil {
-		return
+		return nil, errors.WithStack(err)
 	}
-	secureConn = &SecureConn{
+	return &SecureConn{
 		cipher,
 		conn,
-	}
-	return
+	}, nil
 }
