@@ -57,8 +57,8 @@ func once(ctx *LocalContext, config Config, src, dst net.Conn) bool {
 	}
 	if err != io.EOF {
 		ctx.LogError(err, "once read wrong!")
-		ctx.Cancel()
 	}
+	ctx.Cancel()
 	return false
 }
 
