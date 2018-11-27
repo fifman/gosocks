@@ -63,7 +63,7 @@ func methodValidation(ctx *LocalContext, conn net.Conn, buffer []byte) error {
 		return err
 	}
 	if buffer[0] != Socks5Version {
-		return VersionError
+		return errors.WithStack(VersionError)
 	}
 	nmethod := buffer[1]
 	if _, err := io.ReadFull(conn, buffer[2:2+nmethod]); err != nil {
@@ -75,7 +75,7 @@ func methodValidation(ctx *LocalContext, conn net.Conn, buffer []byte) error {
 			return nil
 		}
 	}
-	return MethodError
+	return errors.WithStack(MethodError)
 }
 
 func confirm(conn net.Conn) (err error) {

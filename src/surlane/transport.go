@@ -13,10 +13,6 @@ type Pipe struct {
 	*LocalContext
 }
 
-var (
-	pipNum = 0
-)
-
 func (pipe *Pipe) Run() {
 	signChannel := make(chan interface{}, 2)
 	go transfer(pipe.LocalContext, signChannel, pipe.upConn, pipe.downConn, pipe.config)
@@ -31,41 +27,34 @@ func (pipe *Pipe) Run() {
 }
 
 func transfer(ctx *LocalContext, signChannel chan interface{}, src, dst net.Conn, config Config) {
-	running := true
-	for ;running; {
-		running = once(ctx, config, src, dst)
-	}
-	signChannel <- nil
-}
-
-func once(ctx *LocalContext, config Config, src, dst net.Conn) bool {
-	config.ApplyTimeout(src)
-	buffer := BufferPool.Borrow()
-	defer BufferPool.GetBack(buffer)
-	n, err := src.Read(buffer)
-	ctx.Debug("transfer bytes:", n, err)
-	if n > 0 {
-		if _, err2 := dst.Write(buffer[:n]); err2 != nil {
-			ctx.LogError(err2, "once write wrong!")
-			ctx.Cancel()
-			return false
+	for {
+		config.ApplyTimeout(src)
+		//buffer := BufferPool.Borrow()
+		//defer BufferPool.GetBack(buffer)
+		buffer := make([]byte, 4096)
+		n, err := src.Read(buffer)
+		ctx.Debug("transfer bytes:", n, err)
+		if n > 0 {
+			if _, err2 := dst.Write(buffer[:n]); err2 != nil {
+				ctx.LogError(err2, "once write wrong!")
+				ctx.Cancel()
+				return
+			}
 		}
+		if err == nil {
+            continue
+		}
+		if err != io.EOF && !CheckConnReset(err) {
+			ctx.LogError(err, "once read wrong!")
+			ctx.Cancel()
+		} else {
+			signChannel <- nil
+		}
+		return
 	}
-	if err == nil {
-		return true
-	}
-	if err != io.EOF && !CheckConnReset(err) {
-		ctx.LogError(err, "once read wrong!")
-	}
-	ctx.Cancel()
-	return false
 }
 
 func CreateClientPipe (ctx *LocalContext, config ClientConfig, conn net.Conn) {
-	//pipNum++
-	//ctx.Level(LevelInfo)
-	//ctx.Info("new client pipe!", pipNum)
-	//ctx.Level(LevelError)
 	defer conn.Close()
 	config.ApplyTimeout(conn)
 	rawAddr, err := Socks5Auth(ctx, conn)

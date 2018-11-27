@@ -40,9 +40,6 @@ func RunClient(ctx *LocalContext, config ClientConfig) {
 		"surlane-client",
 		config.Port,
 		func(conn net.Conn) {
-			//ctx.Level(LevelDebug)
-			//ctx.Debug("new handled local conn:", conn.RemoteAddr())
-			//ctx.Level(LevelError)
 			CreateClientPipe(NewContext(ctx, "client conn handler"), config, conn)
 		},
 	}.Run(ctx)
@@ -53,9 +50,6 @@ func RunServer(ctx *LocalContext, config ServerConfig, dialServer func(*LocalCon
 		"surlane-server",
 		config.Port,
 		func(conn net.Conn) {
-			//ctx.Level(LevelDebug)
-			//ctx.Debug("new handled client conn:", conn.RemoteAddr())
-			//ctx.Level(LevelError)
 			CreateServerPipe(NewContext(ctx, "server conn handler"), config, conn, dialServer)
 		},
 	}.Run(ctx)

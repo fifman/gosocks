@@ -19,8 +19,6 @@ func RunLaneServer(parent *surlane.LocalContext, result chan interface{}, signCh
 	}
 	if err != nil {
 		result <- err
-		//result <- struct {}{}
-		//result <- struct {}{}
 		signChan <- struct {}{}
 		return
 	}
