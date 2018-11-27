@@ -3,6 +3,7 @@ package surlane
 import (
 	"net"
 	"github.com/pkg/errors"
+	"io"
 )
 
 type Pipe struct {
@@ -49,26 +50,22 @@ func once(ctx *LocalContext, config Config, src, dst net.Conn) bool {
 			ctx.Cancel()
 			return false
 		}
-	} /*else {
-		ctx.LogError(err, "once read zero")
-		ctx.Cancel()
-		return false
-	}*/
+	}
 	if err == nil {
 		return true
 	}
-	//if err != io.EOF {
+	if err != io.EOF && !CheckConnReset(err) {
 		ctx.LogError(err, "once read wrong!")
-	//}
+	}
 	ctx.Cancel()
 	return false
 }
 
 func CreateClientPipe (ctx *LocalContext, config ClientConfig, conn net.Conn) {
-	pipNum++
-	ctx.Level(LevelInfo)
-	ctx.Info("new client pipe!", pipNum)
-	ctx.Level(LevelError)
+	//pipNum++
+	//ctx.Level(LevelInfo)
+	//ctx.Info("new client pipe!", pipNum)
+	//ctx.Level(LevelError)
 	defer conn.Close()
 	config.ApplyTimeout(conn)
 	rawAddr, err := Socks5Auth(ctx, conn)

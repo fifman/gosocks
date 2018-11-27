@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"fmt"
 	"github.com/pkg/errors"
-	"syscall"
 )
 
 const (
@@ -242,5 +241,5 @@ func CheckConnReset(err error) bool {
 	if opErr.Err == nil {
 		return false
 	}
-	return opErr.Err.Error() == syscall.ECONNRESET.Error()
+	return opErr.Err.Error() == "use of closed network connection"
 }
