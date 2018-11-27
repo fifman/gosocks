@@ -16,7 +16,7 @@ func getServerConfig() surlane.ServerConfig {
 			Password: "123456",
 			Method:   surlane.CES_128_CFB,
 			Port:     1190,
-			Timeout:  time.Second * 15,
+			Timeout:  time.Second * 60,
 		},
 	}
 }
