@@ -42,16 +42,16 @@ func once(ctx *LocalContext, config Config, src, dst net.Conn) bool {
 	n, err := src.Read(buffer)
 	ctx.Debug("transfer bytes:", n, err)
 	if n > 0 {
-		if _, err := dst.Write(buffer[:n]); err != nil {
-			ctx.LogError(err, "once write wrong!")
+		if _, err2 := dst.Write(buffer[:n]); err2 != nil {
+			ctx.LogError(err2, "once write wrong!")
 			ctx.Cancel()
 			return false
 		}
-	} else {
+	} /*else {
 		ctx.LogError(err, "once read zero")
 		ctx.Cancel()
 		return false
-	}
+	}*/
 	if err == nil {
 		return true
 	}
