@@ -2,7 +2,6 @@ package surlane
 
 import (
 	"net"
-	"io"
 	"github.com/pkg/errors"
 )
 
@@ -31,7 +30,10 @@ func (pipe *Pipe) Run() {
 }
 
 func transfer(ctx *LocalContext, signChannel chan interface{}, src, dst net.Conn, config Config) {
-	for once(ctx, config, src, dst) {}
+	running := true
+	for ;running; {
+		running = once(ctx, config, src, dst)
+	}
 	signChannel <- nil
 }
 
@@ -55,9 +57,9 @@ func once(ctx *LocalContext, config Config, src, dst net.Conn) bool {
 	if err == nil {
 		return true
 	}
-	if err != io.EOF {
+	//if err != io.EOF {
 		ctx.LogError(err, "once read wrong!")
-	}
+	//}
 	ctx.Cancel()
 	return false
 }
