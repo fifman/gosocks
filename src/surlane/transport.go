@@ -2,7 +2,6 @@ package surlane
 
 import (
 	"net"
-	"github.com/pkg/errors"
 	"io"
 )
 
@@ -10,46 +9,49 @@ type Pipe struct {
 	downConn net.Conn
 	upConn net.Conn
 	config Config
+	channel chan interface{}
 	*LocalContext
 }
 
 func (pipe *Pipe) Run() {
-	signChannel := make(chan interface{}, 2)
-	go transfer(pipe.LocalContext, signChannel, pipe.upConn, pipe.downConn, pipe.config)
-	go transfer(pipe.LocalContext, signChannel, pipe.downConn, pipe.upConn, pipe.config)
+	pipe.channel = make(chan interface{}, 2)
+	go pipe.transfer(pipe.upConn, pipe.downConn)
+	go pipe.transfer(pipe.downConn, pipe.upConn)
 	for i:=0; i<2; i++ {
 		select {
 		case <-pipe.Done():
 			return
-		case <- signChannel:
+		case <- pipe.channel:
 		}
 	}
 }
 
-func transfer(ctx *LocalContext, signChannel chan interface{}, src, dst net.Conn, config Config) {
-	for {
-		config.ApplyTimeout(src)
-		buffer := make([]byte, 4096)
-		n, err := src.Read(buffer)
-		ctx.Debug("transfer bytes:", n, err)
-		if n > 0 {
-			if _, err2 := dst.Write(buffer[:n]); err2 != nil {
-				ctx.LogError(err2, "once write wrong!")
-				ctx.Cancel()
-				return
-			}
+func (pipe *Pipe) transfer(src, dst net.Conn) {
+	for ;pipe.once(src, dst); {}
+}
+
+func (pipe *Pipe) once(src, dst net.Conn) bool {
+	pipe.config.ApplyTimeout(src)
+	buffer := BufferPool.Borrow()
+	defer BufferPool.GetBack(buffer)
+	n, err := src.Read(buffer)
+	if n > 0 {
+		if _, err2 := dst.Write(buffer[:n]); err2 != nil {
+			pipe.LogError(err2, "once write wrong!")
+			pipe.Cancel()
+			return false
 		}
-		if err == nil {
-            continue
-		}
-		if err != io.EOF && !CheckConnReset(err) {
-			ctx.LogError(err, "once read wrong!")
-			ctx.Cancel()
-		} else {
-			signChannel <- nil
-		}
-		return
 	}
+	if err == nil {
+		return true
+	}
+	if err != io.EOF && !CheckConnReset(err) {
+		pipe.LogError(err, "once read wrong!")
+		pipe.Cancel()
+	} else {
+		pipe.channel <- nil
+	}
+	return false
 }
 
 func CreateClientPipe (ctx *LocalContext, config ClientConfig, conn net.Conn) {
@@ -78,7 +80,7 @@ func CreateClientPipe (ctx *LocalContext, config ClientConfig, conn net.Conn) {
 		ctx.LogError(err, "client pipe 4")
 		return
 	}
-	pipe := Pipe{ conn, upConn, config.Config, ctx}
+	pipe := Pipe{ conn, upConn, config.Config, make(chan interface{}, 2), ctx}
 	pipe.Run()
 }
 
@@ -102,7 +104,7 @@ func CreateServerPipe(ctx *LocalContext, config ServerConfig, conn net.Conn, dia
 		ctx.LogError(err, "server pipe 3")
 		return
 	}
-	pipe := Pipe{ downConn, upConn, config.Config, ctx}
+	pipe := Pipe{ downConn, upConn, config.Config, make(chan interface{}, 2), ctx}
 	pipe.Run()
 }
 
@@ -110,41 +112,3 @@ func DialWeb(ctx *LocalContext, address string)(net.Conn, error) {
 	return (&net.Dialer{}).DialContext(ctx, "tcp", address)
 }
 
-type SecureConn struct {
-	*SurCipher
-	net.Conn
-}
-
-func (secureConn *SecureConn) Read(buffer []byte) (n int, err error) {
-	n, err = secureConn.Conn.Read(buffer)
-	if n > 0 {
-		copy(buffer[:n], secureConn.SurCipher.decrypt(buffer[:n]))
-	}
-	return
-}
-
-func (secureConn *SecureConn) Write(buffer []byte) (n int, err error) {
- 	return secureConn.Conn.Write(secureConn.SurCipher.encrypt(buffer))
-}
-
-func NewClientSecureConn(conn net.Conn, config ClientConfig, iv []byte) (*SecureConn, error) {
-	cipher, err := NewSurCipher4Client(config, iv)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	return &SecureConn{
-		cipher,
-		conn,
-	}, nil
-}
-
-func NewServerSecureConn(conn net.Conn, config ServerConfig, iv []byte) (*SecureConn, error) {
-	cipher, err := NewSurCipher4Server(config, iv)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	return &SecureConn{
-		cipher,
-		conn,
-	}, nil
-}

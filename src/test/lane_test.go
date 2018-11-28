@@ -10,7 +10,7 @@ import (
 func TestLane(t *testing.T) {
 	err := runLaneTest("www.baidu.com", 1099, surlane.Config{
 		"123456",
-		surlane.CES_128_CFB,
+		surlane.Ces128Cfb,
 		1999,
 		time.Second * 5,
 	})

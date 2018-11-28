@@ -5,17 +5,19 @@ import (
 	"crypto/aes"
 	"crypto/md5"
 	"crypto/rand"
+	"net"
+	"github.com/pkg/errors"
 )
 
 const (
-	CES_128_CFB = iota
-	CES_256_CFB
+	Ces128Cfb    = iota
+	Ces256Cfb
 )
 
 var (
 	cipherMap = map[int]StreamBuilder{
-		CES_128_CFB: &CES128StreamBuilder{},
-		CES_256_CFB: nil,
+		Ces128Cfb: &CES128StreamBuilder{},
+		Ces256Cfb: nil,
 	}
 )
 
@@ -36,9 +38,9 @@ func (*CES128StreamBuilder) createCipher(password string, iv []byte) (surCipher 
 	surCipher = &SurCipher{
 		iv,
 		password,
-		CES_128_CFB,
+		Ces128Cfb,
 		cipher.NewCFBEncrypter(block, iv),
-	 	cipher.NewCFBDecrypter(block, iv),
+		cipher.NewCFBDecrypter(block, iv),
 	}
 	return
 }
@@ -90,4 +92,43 @@ func (surCipher *SurCipher) decrypt(data []byte) (cipherText []byte) {
 	cipherText = make([]byte, len(data))
 	surCipher.dec.XORKeyStream(cipherText, data)
 	return
+}
+
+type SecureConn struct {
+	*SurCipher
+	net.Conn
+}
+
+func (secureConn *SecureConn) Read(buffer []byte) (n int, err error) {
+	n, err = secureConn.Conn.Read(buffer)
+	if n > 0 {
+		copy(buffer[:n], secureConn.SurCipher.decrypt(buffer[:n]))
+	}
+	return
+}
+
+func (secureConn *SecureConn) Write(buffer []byte) (n int, err error) {
+	return secureConn.Conn.Write(secureConn.SurCipher.encrypt(buffer))
+}
+
+func NewClientSecureConn(conn net.Conn, config ClientConfig, iv []byte) (*SecureConn, error) {
+	surCipher, err := NewSurCipher4Client(config, iv)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return &SecureConn{
+		surCipher,
+		conn,
+	}, nil
+}
+
+func NewServerSecureConn(conn net.Conn, config ServerConfig, iv []byte) (*SecureConn, error) {
+	surCipher, err := NewSurCipher4Server(config, iv)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return &SecureConn{
+		surCipher,
+		conn,
+	}, nil
 }

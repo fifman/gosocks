@@ -22,13 +22,13 @@ const (
 func Socks5Auth(ctx *LocalContext, conn net.Conn) ([]byte, error) {
 	buffer := BufferPool.Borrow()
 	defer BufferPool.GetBack(buffer)
-	ctx.Trace("server mth vali")
+	ctx.Trace("server mth validation")
 	if err := methodValidation(ctx, conn, buffer); err != nil {
-		ctx.Trace("vali end")
+		ctx.Trace("validation end")
 		confirmError(conn)
 		return nil, errors.WithStack(err)
 	}
-	ctx.Trace("vali end")
+	ctx.Trace("validation end")
 	if err := confirm(conn); err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -65,12 +65,12 @@ func methodValidation(ctx *LocalContext, conn net.Conn, buffer []byte) error {
 	if buffer[0] != Socks5Version {
 		return errors.WithStack(VersionError)
 	}
-	nmethod := buffer[1]
-	if _, err := io.ReadFull(conn, buffer[2:2+nmethod]); err != nil {
+	nMethod := buffer[1]
+	if _, err := io.ReadFull(conn, buffer[2:2+nMethod]); err != nil {
 		return err
 	}
 	ctx.Debug(buffer)
-	for methodByte := range buffer[2:2+nmethod] {
+	for methodByte := range buffer[2:2+nMethod] {
 		if methodByte == Socks5Method {
 			return nil
 		}
@@ -90,29 +90,29 @@ func parseRequest(ctx *LocalContext, conn net.Conn, buffer []byte) (rawAddr []by
 	if buffer[0] != Socks5Version || buffer[1] != Socks5Command || buffer[2] != Socks5RSV {
 		return nil, ProtocolError
 	}
-	var addrlen, addrType byte
+	var addrLen, addrType byte
 	switch buffer[3] {
 	case Socks5AtypIP4:
-		addrlen = 4
+		addrLen = 4
 		addrType = AddrTypeIP4
 	case Socks5AtypHost:
 		if _, err = io.ReadFull(conn, buffer[4:5]); err != nil {
 			return
 		}
-		addrlen = buffer[4]
-		addrType = addrlen
+		addrLen = buffer[4]
+		addrType = addrLen
 	case Socks5AtypIP6:
-		addrlen = 16
+		addrLen = 16
 		addrType = AddrTypeIP6
 	default:
 		return nil, ProtocolError
 	}
 	buffer[0] = addrType
-	if _, err = io.ReadFull(conn, buffer[1:addrlen+3]); err != nil {
+	if _, err = io.ReadFull(conn, buffer[1:addrLen+3]); err != nil {
 		return
 	}
-	rawAddr = make([]byte, addrlen+3)
-	copy(rawAddr, buffer[:addrlen+3])
+	rawAddr = make([]byte, addrLen+3)
+	copy(rawAddr, buffer[:addrLen+3])
 	ctx.Debug(rawAddr)
 	return
 }

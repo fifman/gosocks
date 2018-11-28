@@ -51,13 +51,13 @@ func runRemote(ctx *surlane.LocalContext) {
 	}.Run(ctx)
 }
 
-func runLocal(content, addr string, port uint16, version, nmethod, command, rsv, atyp byte, methods []byte) error {
+func runLocal(content, addr string, port uint16, version, nMethod, command, rsv, atyp byte, methods []byte) error {
 	ctx := surlane.NewContext(&surlane.RootContext, "run local")
 	ctx.Level(surlane.LevelDebug)
 	client := NewSocks5Client(1977)
 	client.SetDeadline(time.Now().Add(time.Second * 10))
 	defer client.Close()
-	err := client.Run(content, addr, port, version, nmethod,command, rsv, atyp, methods)
+	err := client.Run(content, addr, port, version, nMethod,command, rsv, atyp, methods)
 	if err != nil {
 		return errors.Wrap(err, "")
 	}
@@ -81,7 +81,7 @@ func runLocal(content, addr string, port uint16, version, nmethod, command, rsv,
 	return nil
 }
 
-func runFullPipe(ctx *surlane.LocalContext, expectedAddress, pwd string, method int16) {
+func runFullPipe(ctx *surlane.LocalContext, expectedAddress, pwd string, method int) {
 	go runRemote(ctx)
 	go surlane.RunServer(ctx, surlane.ServerConfig{
 		surlane.Config{
@@ -110,7 +110,7 @@ func runFullPipe(ctx *surlane.LocalContext, expectedAddress, pwd string, method 
 func trySuccessRun(pwd, address string, port uint16, num int) int {
 	ctx := surlane.NewContext(&surlane.RootContext, "test context")
 	var waiter sync.WaitGroup
-	runFullPipe(ctx, address+":"+strconv.Itoa(int(port)), pwd, surlane.CES_128_CFB)
+	runFullPipe(ctx, address+":"+strconv.Itoa(int(port)), pwd, surlane.Ces128Cfb)
 	errChan := make(chan error, num)
 	time.Sleep(time.Second * 3)
 	for i:=0; i<num; i++ {
