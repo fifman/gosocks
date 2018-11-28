@@ -3,7 +3,7 @@ package test
 import (
 	"testing"
 	"net"
-	"github.com/fifman/gosocks/src/surlane"
+	"github.com/fifman/surlane/src/surlane"
 	"sync"
 	"context"
 )

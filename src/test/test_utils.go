@@ -3,7 +3,7 @@ package test
 import (
 	"log"
 	"os"
-	"github.com/fifman/gosocks/src/surlane"
+	"github.com/fifman/surlane/src/surlane"
 )
 
 var (

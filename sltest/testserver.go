@@ -2,7 +2,7 @@ package main
 
 import (
 	"net"
-	"github.com/fifman/gosocks/src/surlane"
+	"github.com/fifman/surlane/src/surlane"
 	"fmt"
 	"io"
 	"time"

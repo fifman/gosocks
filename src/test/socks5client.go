@@ -3,7 +3,7 @@ package test
 import (
 	"net"
 	"io"
-	"github.com/fifman/gosocks/src/surlane"
+	"github.com/fifman/surlane/src/surlane"
 	"encoding/binary"
 	"bytes"
 	"fmt"

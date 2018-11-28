@@ -3,7 +3,7 @@ package test
 import (
 "net"
 "fmt"
-	"github.com/fifman/gosocks/src/surlane"
+	"github.com/fifman/surlane/src/surlane"
 )
 
 type LaneClient struct {

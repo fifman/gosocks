@@ -3,7 +3,7 @@ package test
 import (
 	"testing"
 	"github.com/stretchr/testify/assert"
-	"github.com/fifman/gosocks/src/surlane"
+	"github.com/fifman/surlane/src/surlane"
 	"fmt"
 )
 

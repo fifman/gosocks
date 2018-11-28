@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/fifman/gosocks/src/surlane"
+	"github.com/fifman/surlane/src/surlane"
 )
 
 func main() {
