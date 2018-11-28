@@ -3,11 +3,12 @@ package surlane
 import (
 	"net"
 	"fmt"
+	"strconv"
 )
 
 type TcpServer struct {
 	Name string
-	Port uint16
+	Port int
 	Handler func(conn net.Conn)
 }
 
@@ -19,19 +20,22 @@ func (server TcpServer) Run(ctx *LocalContext) {
 	}
 	available := true
 	go func() {
-		for ;available; {
-			conn, err := listener.Accept()
-			if err !=nil {
-				fmt.Println("test run", server.Name, "handle conn error:", err)
-				continue
-			}
-			go server.Handler(conn)
+		select {
+		case <-ctx.Done():
+			available = false
+			listener.Close()
 		}
 	}()
-	select {
-	case <-ctx.Done():
-		available = false
-		listener.Close()
+	for {
+		if !available {
+			return
+		}
+		conn, err := listener.Accept()
+		if err !=nil {
+			fmt.Println("test run", server.Name, "handle conn error:", err)
+			continue
+		}
+		go server.Handler(conn)
 	}
 }
 
@@ -40,7 +44,8 @@ func RunClient(ctx *LocalContext, config ClientConfig) {
 		"surlane-client",
 		config.Port,
 		func(conn net.Conn) {
-			CreateClientPipe(NewContext(ctx, "client conn handler"), config, conn)
+			cpn++
+			CreateClientPipe(NewContext(ctx, "client pipe " + strconv.Itoa(cpn)), config, conn)
 		},
 	}.Run(ctx)
 }
@@ -50,7 +55,8 @@ func RunServer(ctx *LocalContext, config ServerConfig, dialServer func(*LocalCon
 		"surlane-server",
 		config.Port,
 		func(conn net.Conn) {
-			CreateServerPipe(NewContext(ctx, "server conn handler"), config, conn, dialServer)
+			spn++
+			CreateServerPipe(NewContext(ctx, "server pipe " + strconv.Itoa(spn)), config, conn, dialServer)
 		},
 	}.Run(ctx)
 }

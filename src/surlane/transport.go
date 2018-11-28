@@ -29,8 +29,6 @@ func (pipe *Pipe) Run() {
 func transfer(ctx *LocalContext, signChannel chan interface{}, src, dst net.Conn, config Config) {
 	for {
 		config.ApplyTimeout(src)
-		//buffer := BufferPool.Borrow()
-		//defer BufferPool.GetBack(buffer)
 		buffer := make([]byte, 4096)
 		n, err := src.Read(buffer)
 		ctx.Debug("transfer bytes:", n, err)
@@ -62,7 +60,7 @@ func CreateClientPipe (ctx *LocalContext, config ClientConfig, conn net.Conn) {
 		ctx.LogError(err, "client pipe 1")
 		return
 	}
-	upRawConn, err := (&net.Dialer{}).DialContext(NewContext(ctx, "client dial"), "tcp", config.Server)
+	upRawConn, err := (&net.Dialer{}).DialContext(NewContextWithDeadline(ctx, "client dial", config.Timeout), "tcp", config.Server)
 	if err != nil {
 		ctx.LogError(err, "client pipe 2")
 		return
@@ -120,17 +118,13 @@ type SecureConn struct {
 func (secureConn *SecureConn) Read(buffer []byte) (n int, err error) {
 	n, err = secureConn.Conn.Read(buffer)
 	if n > 0 {
-		copy(secureConn.SurCipher.decrypt(buffer[:n]), buffer[:n])
+		copy(buffer[:n], secureConn.SurCipher.decrypt(buffer[:n]))
 	}
 	return
 }
 
 func (secureConn *SecureConn) Write(buffer []byte) (n int, err error) {
-	n, err = secureConn.Conn.Write(buffer)
-	if n > 0 {
-		copy(secureConn.SurCipher.encrypt(buffer[:n]), buffer[:n])
-	}
-	return
+ 	return secureConn.Conn.Write(secureConn.SurCipher.encrypt(buffer))
 }
 
 func NewClientSecureConn(conn net.Conn, config ClientConfig, iv []byte) (*SecureConn, error) {

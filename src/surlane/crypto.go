@@ -13,7 +13,7 @@ const (
 )
 
 var (
-	cipherMap = map[int16]StreamBuilder{
+	cipherMap = map[int]StreamBuilder{
 		CES_128_CFB: &CES128StreamBuilder{},
 		CES_256_CFB: nil,
 	}
