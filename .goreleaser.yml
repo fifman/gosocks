@@ -25,6 +25,12 @@ archive:
     windows: Windows
     386: i386
     amd64: x86_64
+  files:
+    - LICENSE.txt
+    - README.md
+    - docs/*
+    - config.toml
+
 checksum:
   name_template: 'checksums.txt'
 snapshot:
@@ -36,11 +42,6 @@ changelog:
     - '^docs:'
     - '^src/test:'
     - '^sltest:'
-  files:
-    - LICENSE.txt
-    - README.md
-    - docs/*
-    - config.toml
 
 brew:
   name: surlane
