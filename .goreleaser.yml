@@ -42,13 +42,12 @@ brew:
 
   github:
     owner: fifman
-    name: surlane
+    name: homebrew-tap
 
   commit_author:
     name: fifman
     email: 1264380449@qq.com
 
-  folder: formula
   caveats: "secure tunnel like shadowsocks, but lightweight"
   description: "secure tunnel like shadowsocks, but lightweight"
 
