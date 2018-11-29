@@ -16,7 +16,7 @@ builds:
       goarch: 386
     - goos: linux
       goarch: arm
-        goarm: 7
+      goarm: 7
 
 archive:
   replacements:
