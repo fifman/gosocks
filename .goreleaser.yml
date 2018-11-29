@@ -1,0 +1,91 @@
+builds:
+- main: ./bin/main.go
+  flags:
+    - -tags=early
+  env:
+    - CGO_ENABLED=0
+  goos:
+    - darwin
+    - windows
+    - linux
+  goarch:
+    - amd64
+    - 386
+  ignore:
+    - goos: darwin
+      goarch: 386
+    - goos: linux
+      goarch: arm
+        goarm: 7
+- main: ./slserver/slserver.go
+  flags:
+    - -tags=early
+  env:
+    - CGO_ENABLED=0
+  goos:
+    - darwin
+    - windows
+    - linux
+  goarch:
+    - amd64
+    - 386
+  ignore:
+    - goos: darwin
+      goarch: 386
+    - goos: linux
+      goarch: arm
+        goarm: 7
+
+archive:
+  replacements:
+    darwin: Darwin
+    linux: Linux
+    windows: Windows
+    386: i386
+    amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^src/test:'
+    - '^sltest:'
+
+brew:
+  name: surlane
+
+  github:
+    owner: fifman
+    name: surlane
+
+  commit_author:
+    name: fifman
+    email: 1264380449@qq.com
+
+  folder: formula
+  caveats: "secure tunnel like shadowsocks, but lightweight"
+  description: "secure tunnel like shadowsocks, but lightweight"
+
+  plist: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0">
+    <dict>
+        <key>Label</key>
+        <string>#{plist_name}</string>
+        <key>ProgramArguments</key>
+        <array>
+            <string>#{opt_bin}/surlane</string>
+            <string>-c /etc/surlane/config.toml</string>
+        </array>
+        <key>KeepAlive</key>
+        <true/>
+    </dict>
+    </plist>
+
+  test: |
+    system "#{bin}/surlane --version"

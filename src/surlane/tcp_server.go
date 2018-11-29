@@ -39,7 +39,7 @@ func (server TcpServer) Run(ctx *LocalContext) {
 	}
 }
 
-func RunClient(ctx *LocalContext, config ClientConfig) {
+func RunClient(ctx *LocalContext, config Config) {
 	TcpServer{
 		"surlane-client",
 		config.Port,
@@ -50,7 +50,7 @@ func RunClient(ctx *LocalContext, config ClientConfig) {
 	}.Run(ctx)
 }
 
-func RunServer(ctx *LocalContext, config ServerConfig, dialServer func(*LocalContext, string)(net.Conn, error)) {
+func RunServer(ctx *LocalContext, config Config, dialServer func(*LocalContext, string)(net.Conn, error)) {
 	TcpServer{
 		"surlane-server",
 		config.Port,

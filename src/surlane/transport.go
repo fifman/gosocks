@@ -54,7 +54,7 @@ func (pipe *Pipe) once(src, dst net.Conn) bool {
 	return false
 }
 
-func CreateClientPipe (ctx *LocalContext, config ClientConfig, conn net.Conn) {
+func CreateClientPipe (ctx *LocalContext, config Config, conn net.Conn) {
 	defer conn.Close()
 	config.ApplyTimeout(conn)
 	rawAddr, err := Socks5Auth(ctx, conn)
@@ -80,11 +80,11 @@ func CreateClientPipe (ctx *LocalContext, config ClientConfig, conn net.Conn) {
 		ctx.LogError(err, "client pipe 4")
 		return
 	}
-	pipe := Pipe{ conn, upConn, config.Config, make(chan interface{}, 2), ctx}
+	pipe := Pipe{ conn, upConn, config, make(chan interface{}, 2), ctx}
 	pipe.Run()
 }
 
-func CreateServerPipe(ctx *LocalContext, config ServerConfig, conn net.Conn, dialServer func(*LocalContext, string)(net.Conn, error)) {
+func CreateServerPipe(ctx *LocalContext, config Config, conn net.Conn, dialServer func(*LocalContext, string)(net.Conn, error)) {
 	defer conn.Close()
 	config.ApplyTimeout(conn)
 	iv, address, err := LaneAuth(ctx, config, conn)
@@ -104,11 +104,10 @@ func CreateServerPipe(ctx *LocalContext, config ServerConfig, conn net.Conn, dia
 		ctx.LogError(err, "server pipe 3")
 		return
 	}
-	pipe := Pipe{ downConn, upConn, config.Config, make(chan interface{}, 2), ctx}
+	pipe := Pipe{ downConn, upConn, config, make(chan interface{}, 2), ctx}
 	pipe.Run()
 }
 
 func DialWeb(ctx *LocalContext, address string)(net.Conn, error) {
 	return (&net.Dialer{}).DialContext(ctx, "tcp", address)
 }
-

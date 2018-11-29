@@ -63,22 +63,22 @@ type SurCipher struct {
 	dec    cipher.Stream
 }
 
-func GetIV(config ClientConfig) []byte {
+func GetIV(config Config) []byte {
 	streamBuilder := cipherMap[config.Method]
 	return streamBuilder.genIV()
 }
 
-func GetIvLen(config ServerConfig) int {
+func GetIvLen(config Config) int {
 	streamBuilder := cipherMap[config.Method]
 	return streamBuilder.getIvLen()
 }
 
-func NewSurCipher4Client(config ClientConfig, iv []byte) (*SurCipher, error) {
+func NewSurCipher4Client(config Config, iv []byte) (*SurCipher, error) {
 	streamBuilder := cipherMap[config.Method]
 	return streamBuilder.createCipher(config.Password, iv)
 }
 
-func NewSurCipher4Server(config ServerConfig, iv []byte) (*SurCipher, error) {
+func NewSurCipher4Server(config Config, iv []byte) (*SurCipher, error) {
 	return cipherMap[config.Method].createCipher(config.Password, iv)
 }
 
@@ -111,7 +111,7 @@ func (secureConn *SecureConn) Write(buffer []byte) (n int, err error) {
 	return secureConn.Conn.Write(secureConn.SurCipher.encrypt(buffer))
 }
 
-func NewClientSecureConn(conn net.Conn, config ClientConfig, iv []byte) (*SecureConn, error) {
+func NewClientSecureConn(conn net.Conn, config Config, iv []byte) (*SecureConn, error) {
 	surCipher, err := NewSurCipher4Client(config, iv)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -122,7 +122,7 @@ func NewClientSecureConn(conn net.Conn, config ClientConfig, iv []byte) (*Secure
 	}, nil
 }
 
-func NewServerSecureConn(conn net.Conn, config ServerConfig, iv []byte) (*SecureConn, error) {
+func NewServerSecureConn(conn net.Conn, config Config, iv []byte) (*SecureConn, error) {
 	surCipher, err := NewSurCipher4Server(config, iv)
 	if err != nil {
 		return nil, errors.WithStack(err)

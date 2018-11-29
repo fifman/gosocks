@@ -16,7 +16,7 @@ func LaneAck(ctx *LocalContext, conn net.Conn, rawAddr []byte, iv []byte) (err1 
 	return nil
 }
 
-func LaneAuth(ctx *LocalContext, config ServerConfig, conn net.Conn) (iv []byte, address string, err1 error) {
+func LaneAuth(ctx *LocalContext, config Config, conn net.Conn) (iv []byte, address string, err1 error) {
 	ivLen := GetIvLen(config)
 	buffer := BufferPool.Borrow()
 	defer BufferPool.GetBack(buffer)
