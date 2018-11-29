@@ -36,6 +36,11 @@ changelog:
     - '^docs:'
     - '^src/test:'
     - '^sltest:'
+  files:
+    - LICENSE.txt
+    - README.md
+    - docs/*
+    - config.toml
 
 brew:
   name: surlane
@@ -48,7 +53,7 @@ brew:
     name: fifman
     email: 1264380449@qq.com
 
-  caveats: "secure tunnel like shadowsocks, but lightweight"
+  caveats: "config file is stored in #{etc}/surlane/config.toml"
   description: "secure tunnel like shadowsocks, but lightweight"
 
   plist: |
@@ -61,12 +66,20 @@ brew:
         <key>ProgramArguments</key>
         <array>
             <string>#{opt_bin}/surlane</string>
-            <string>-c /etc/surlane/config.toml</string>
+            <string>-c=#{etc}/surlane/config.toml</string>
         </array>
         <key>KeepAlive</key>
         <true/>
+        <key>StandardErrorPath</key>
+        <string>#{var}/log/surlane.log</string>
+        <key>StandardOutPath</key>
+        <string>#{var}/log/surlane.log</string>
     </dict>
     </plist>
 
   test: |
     system "#{bin}/surlane --version"
+
+  install: |
+    bin.install "surlane"
+    (etc/"surlane").install "config.toml"
