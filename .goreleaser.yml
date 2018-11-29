@@ -26,9 +26,8 @@ archive:
     386: i386
     amd64: x86_64
   files:
-    - LICENSE.txt
+    - license
     - README.md
-    - docs/*
     - config.toml
 
 checksum:
