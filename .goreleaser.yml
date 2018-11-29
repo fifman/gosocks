@@ -17,24 +17,6 @@ builds:
     - goos: linux
       goarch: arm
         goarm: 7
-- main: ./slserver/slserver.go
-  flags:
-    - -tags=early
-  env:
-    - CGO_ENABLED=0
-  goos:
-    - darwin
-    - windows
-    - linux
-  goarch:
-    - amd64
-    - 386
-  ignore:
-    - goos: darwin
-      goarch: 386
-    - goos: linux
-      goarch: arm
-        goarm: 7
 
 archive:
   replacements:
