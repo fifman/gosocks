@@ -1,5 +1,5 @@
 builds:
-- main: ./bin/main.go
+- main: ./main.go
   flags:
     - -tags=early
   env:

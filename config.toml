@@ -1,3 +1,3 @@
 password = "123456"
 method = 0
-server = "45.78.12.43:1180"
+server = ":1180"
