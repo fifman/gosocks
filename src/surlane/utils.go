@@ -176,9 +176,9 @@ func NewContext(parent *LocalContext, name string) *LocalContext {
 	}
 }
 
-func NewContextWithDeadline(parent *LocalContext, name string, duration time.Duration) *LocalContext {
+func NewContextWithDeadline(parent *LocalContext, name string, duration duration) *LocalContext {
 	currentRoutineId += 1
-	sub, cancel := context.WithDeadline(parent.Context, time.Now().Add(duration))
+	sub, cancel := context.WithDeadline(parent.Context, time.Now().Add(duration.Duration))
 	return &LocalContext{
 		sub,
 		currentRoutineId,
