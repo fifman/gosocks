@@ -15,6 +15,7 @@ func main() {
 			kcpConfig.Listen = fmt.Sprintf(":%d", config.Port)
 			kcpConfig.Target = ":29901"
 			kcpConfig.Key = config.Password
+			src.PostLoadConfig(&kcpConfig)
 			config.Port = 29901
 			serverConfig := src.ServerConfig{
 				false, kcpConfig,
@@ -29,6 +30,7 @@ func main() {
 			kcpConfig.Target = config.Server
 			config.Server = ":29901"
 			kcpConfig.Key = config.Password
+			src.PostLoadConfig(&kcpConfig)
 			go src.RunClient(src.ClientConfig{
 				1, 0, 600, kcpConfig,
 			})

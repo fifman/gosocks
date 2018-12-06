@@ -30,9 +30,9 @@ type Config struct {
 	Kcptun   src.Config
 }
 
-func CreateDefaultConfig() Config {
+func createDefaultConfig() Config {
 	config := Config{
-		"123456", 0, 1180, duration{60 * time.Second}, "", false, src.Config{
+		"123456", 0, 1180, duration{60 * time.Second}, "", true, src.Config{
 			"", "", "123456", "aes", "fast2", 1350,
 			1024, 1024, 10, 3, 0, false, false, 0,
 			50, 0, 0, 4194304, 10, "", "", 60, false,
@@ -56,7 +56,7 @@ func loadConfigFile(file string, config *Config) {
 }
 
 func GetConfig() Config {
-	config := CreateDefaultConfig()
+	config := createDefaultConfig()
 	flag.IntVar(&config.Method, "m", 0,
 		"choose encryption method (default 0):\n" +
 			"  0: CES_128_CFB\n" +
@@ -77,5 +77,9 @@ func GetConfig() Config {
 	fmt.Println("server address is: " + config.Server)
 	fmt.Println("listening with port: " + strconv.Itoa(config.Port))
 	fmt.Println("choose method: " + strconv.Itoa(config.Method))
+	if config.Server != "" {
+		config.Kcptun.SndWnd = 128
+		config.Kcptun.RcvWnd = 512
+	}
 	return config
 }
