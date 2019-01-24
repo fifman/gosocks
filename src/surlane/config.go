@@ -21,18 +21,21 @@ func (d *duration) UnmarshalText(text []byte) error {
 }
 
 type Config struct {
-	Password string
-	Method   int
-	Port     int
-	Timeout  duration
-	Server   string
-	Kcp      bool
-	Kcptun   src.Config
+	Password   string
+	Method     int
+	Port       int
+	Timeout    duration
+	Server     string
+	Kcp        bool
+	Conn 	   int
+	AutoExpire int
+	ScTTL      int
+	Kcptun     src.Config
 }
 
 func createDefaultConfig() Config {
 	config := Config{
-		"123456", 0, 1180, duration{60 * time.Second}, "", true, src.Config{
+		"123456", 0, 1180, duration{60 * time.Second}, "", true, 1, 0, 600, src.Config{
 			"", "", "123456", "aes", "fast2", 1350,
 			1024, 1024, 10, 3, 0, false, false, 0,
 			50, 0, 0, 4194304, 10, "", "", 60, false,

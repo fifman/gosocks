@@ -32,7 +32,7 @@ func main() {
 			kcpConfig.Key = config.Password
 			src.PostLoadConfig(&kcpConfig)
 			go src.RunClient(src.ClientConfig{
-				1, 0, 600, kcpConfig,
+				config.Conn, config.AutoExpire, config.ScTTL, kcpConfig,
 			})
 		}
 		surlane.RunClient(&surlane.RootContext, config)

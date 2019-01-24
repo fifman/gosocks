@@ -3,3 +3,7 @@ method = 0
 port = 1180
 timeout = "1m"
 kcp = true
+conn = 30
+
+[kcptun]
+mtu = 1000
